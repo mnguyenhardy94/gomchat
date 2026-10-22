@@ -1,0 +1,19 @@
+{
+  "name": "shopee-inbox",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Hộp thư gộp tin nhắn nhiều shop Shopee qua Shopee Open Platform",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node --env-file=.env src/server.js",
+    "demo": "node scripts/dev.js",
+    "mock": "node src/mock.js",
+    "test": "node --test test/e2e.test.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

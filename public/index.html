@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hộp thư đa shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: 3 cột (lọc shop | danh sách hội thoại | khung chat). Dưới 760px chuyển thành 1 cột, bấm vào hội thoại để mở chat. */
+:root {
+  --bg: #eef2f4;
+  --surface: #ffffff;
+  --surface-2: #f6f8f9;
+  --ink: #16222b;
+  --muted: #5b6a76;
+  --line: #dce3e8;
+  --accent: #0e7468;
+  --accent-ink: #ffffff;
+  --accent-soft: #dff2ef;
+  --bubble-in: #eaeef1;
+  --warn: #a8530a;
+  --warn-soft: #fdebd6;
+  --s1: #0e7468;
+  --s2: #b4443a;
+  --s3: #4b5fc4;
+  --s4: #a5780f;
+  --font: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1317; --surface: #151d23; --surface-2: #1a242b; --ink: #e5ecf0; --muted: #92a1ac;
+    --line: #26333c; --accent: #35c2b2; --accent-ink: #04211e; --accent-soft: #14393a;
+    --bubble-in: #212d35; --warn: #f0a24a; --warn-soft: #3b2a14;
+    --s1: #35c2b2; --s2: #ef8379; --s3: #8b9cf0; --s4: #e0b04c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1317; --surface: #151d23; --surface-2: #1a242b; --ink: #e5ecf0; --muted: #92a1ac;
+  --line: #26333c; --accent: #35c2b2; --accent-ink: #04211e; --accent-soft: #14393a;
+  --bubble-in: #212d35; --warn: #f0a24a; --warn-soft: #3b2a14;
+  --s1: #35c2b2; --s2: #ef8379; --s3: #8b9cf0; --s4: #e0b04c;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 12px;
+  display: flex; flex-direction: column; gap: 10px; overflow: hidden;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.top h1 { font-size: 16px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+.demo-tag { font-size: 12px; color: var(--warn); background: var(--warn-soft); padding: 2px 9px; border-radius: 99px; }
+
+.app {
+  flex: 1; min-height: 0; display: grid; grid-template-columns: 210px 330px minmax(0, 1fr);
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+}
+.pane { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.shops { border-right: 1px solid var(--line); background: var(--surface-2); padding: 12px 8px; gap: 2px; overflow-y: auto; }
+.pane-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 4px 8px 8px; }
+.shop-btn {
+  display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; background: none; border: 0;
+  padding: 8px; border-radius: 7px; min-width: 0;
+}
+.shop-btn:hover { background: var(--bubble-in); }
+.shop-btn[aria-pressed="true"] { background: var(--accent-soft); font-weight: 600; }
+.shop-btn .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--muted); }
+.cnt { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.cnt.has { color: var(--accent-ink); background: var(--accent); border-radius: 99px; padding: 0 7px; }
+
+.list { border-right: 1px solid var(--line); }
+.list-head { padding: 10px 12px 0; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--line); }
+.search { width: 100%; border: 1px solid var(--line); background: var(--surface-2); border-radius: 7px; padding: 7px 10px; }
+.tabs { display: flex; gap: 2px; }
+.tab { background: none; border: 0; padding: 7px 10px; color: var(--muted); border-bottom: 2px solid transparent; }
+.tab[aria-selected="true"] { color: var(--ink); font-weight: 600; border-bottom-color: var(--accent); }
+.convs { overflow-y: auto; flex: 1; min-height: 0; }
+.conv {
+  display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line);
+  padding: 10px 12px; min-width: 0;
+}
+.conv:hover { background: var(--surface-2); }
+.conv[aria-current="true"] { background: var(--accent-soft); }
+.conv .r1, .conv .r2 { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.conv .who { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conv .time { font-size: 12px; color: var(--muted); flex: none; font-family: var(--mono); }
+.conv .shopname { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; margin-top: 1px; }
+.conv .prev { color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 3px; }
+.conv.unread .who, .conv.unread .prev { color: var(--ink); }
+.conv.unread .prev { font-weight: 500; }
+.badge { background: var(--accent); color: var(--accent-ink); font-size: 11px; font-weight: 600; border-radius: 99px; padding: 0 6px; min-width: 18px; text-align: center; }
+.empty { padding: 28px 16px; color: var(--muted); text-align: center; }
+
+.chat { background: var(--surface); }
+.chat-head { padding: 10px 14px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.chat-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.back { display: none; background: none; border: 1px solid var(--line); border-radius: 7px; padding: 4px 9px; }
+.chat-title .nm { font-weight: 700; font-size: 15px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shop-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; border: 1px solid var(--line); border-radius: 99px; padding: 2px 10px 2px 8px; flex: none; max-width: 50%; }
+.shop-pill span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.assign { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+.assign select { border: 1px solid var(--line); background: var(--surface-2); border-radius: 6px; padding: 3px 6px; }
+.tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.tag { border: 1px solid var(--line); background: none; border-radius: 99px; padding: 1px 10px; font-size: 12px; color: var(--muted); }
+.tag[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--ink); font-weight: 500; }
+
+.order { margin: 10px 14px 0; border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; background: var(--surface-2); font-size: 13px; }
+.order .id { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.order .st { margin-left: auto; font-weight: 600; font-size: 12px; color: var(--accent); }
+
+.msgs { flex: 1; min-height: 0; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+.day { align-self: center; font-size: 12px; color: var(--muted); margin: 4px 0; }
+.m { max-width: min(78%, 520px); padding: 8px 12px; border-radius: 12px; background: var(--bubble-in); align-self: flex-start; overflow-wrap: anywhere; white-space: pre-wrap; }
+.m.s { align-self: flex-end; background: var(--accent); color: var(--accent-ink); }
+.m .t { display: block; font-family: var(--mono); font-size: 11px; opacity: 0.7; margin-top: 3px; }
+.m.s .t { text-align: right; }
+
+.compose { border-top: 1px solid var(--line); padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 8px; }
+.as { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.as b { color: var(--ink); font-weight: 600; }
+.quick { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.quick button { flex: none; border: 1px solid var(--line); background: var(--surface-2); border-radius: 99px; padding: 3px 11px; font-size: 12px; white-space: nowrap; }
+.quick button:hover { border-color: var(--accent); }
+.row { display: flex; gap: 8px; align-items: flex-end; }
+.row textarea { flex: 1; min-width: 0; resize: none; border: 1px solid var(--line); background: var(--surface-2); border-radius: 8px; padding: 8px 10px; height: 58px; }
+.send { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px; padding: 9px 18px; font-weight: 600; }
+.send:disabled { opacity: 0.45; cursor: default; }
+.hint { font-size: 11px; color: var(--muted); }
+
+.none { flex: 1; display: grid; place-items: center; color: var(--muted); padding: 20px; text-align: center; }
+
+@media (max-width: 1000px) {
+  .app { grid-template-columns: 180px 280px minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  body { padding-block: 8px; }
+  .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .shops { flex-direction: row; overflow-x: auto; overflow-y: hidden; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px; gap: 6px; }
+  .shops .pane-label { display: none; }
+  .shop-btn { width: auto; flex: none; border: 1px solid var(--line); border-radius: 99px; padding: 5px 11px; }
+  .shop-btn .nm { overflow: visible; }
+  .list { border-right: 0; }
+  .app[data-view="list"] .chat { display: none; }
+  .app[data-view="chat"] .list, .app[data-view="chat"] .shops { display: none; }
+  .app[data-view="chat"] { grid-template-rows: minmax(0, 1fr); }
+  .back { display: inline-block; }
+  .m { max-width: 88%; }
+  .hint { display: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .conv, .shop-btn, .tab { transition: background-color 0.12s; }
+}
+
+.btn { display: inline-block; background: var(--accent); color: var(--accent-ink); text-decoration: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; border: 0; }
+.btn.ghost { background: none; color: var(--ink); border: 1px solid var(--line); font-weight: 500; padding: 5px 12px; }
+.btn.ghost:disabled { opacity: .5; cursor: default; }
+.top .sp { flex: 1; }
+.top .status { font-size: 12px; color: var(--muted); }
+.warn { font-size: 11px; color: var(--warn); background: var(--warn-soft); border-radius: 99px; padding: 0 7px; white-space: nowrap; }
+.warn-text { color: var(--warn); }
+.warn-text a, .empty a.btn { color: inherit; }
+.empty a.btn { color: var(--accent-ink); }
+.toast { position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 8px; max-width: calc(100% - 32px); opacity: 0; pointer-events: none; z-index: 20; }
+.toast.show { opacity: 1; }
+.toast.bad { background: var(--warn); color: var(--surface); }
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>Hộp thư đa shop</h1>
+  <span class="status" id="status" aria-live="polite"></span>
+  <span class="sp"></span>
+  <button class="btn ghost" id="sync" type="button">Đồng bộ ngay</button>
+  <a class="btn ghost" href="/auth/connect">Kết nối shop</a>
+</div>
+
+<div class="app" id="app" data-view="list">
+  <nav class="pane shops" id="shops" aria-label="Lọc theo shop"></nav>
+  <section class="pane list" aria-label="Danh sách hội thoại">
+    <div class="list-head">
+      <input class="search" id="q" type="search" placeholder="Tìm tên khách hoặc nội dung" aria-label="Tìm hội thoại">
+      <div class="tabs" role="tablist" id="tabs"></div>
+    </div>
+    <div class="convs" id="convs"></div>
+  </section>
+  <section class="pane chat" id="chat" aria-label="Khung chat"></section>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<script>
+(function () {
+  var SHOP_COLORS = ["--s1", "--s2", "--s3", "--s4"];
+  var data = { shops: [], conversations: [], tags: [], staff: [] };
+  var state = { shop: "all", tab: "all", q: "", cur: null, msgs: [] };
+  var $ = function (id) { return document.getElementById(id); };
+  var app = $("app");
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function api(method, url, body) {
+    return fetch(url, {
+      method: method,
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) throw new Error(j.error || ("Lỗi " + r.status));
+        return j;
+      });
+    });
+  }
+  var toastTimer;
+  function toast(msg, bad) {
+    var t = $("toast");
+    t.textContent = msg;
+    t.className = "toast show" + (bad ? " bad" : "");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.className = "toast"; }, 4500);
+  }
+
+  function shopIndex(id) { for (var i = 0; i < data.shops.length; i++) if (data.shops[i].id === id) return i; return -1; }
+  function shopOf(id) { return data.shops[shopIndex(id)] || { id: id, name: "Shop " + id, status: "active" }; }
+  function dot(shopId) {
+    var d = el("span", "dot");
+    var i = Math.max(shopIndex(shopId), 0);
+    d.style.background = "var(" + SHOP_COLORS[i % SHOP_COLORS.length] + ")";
+    return d;
+  }
+  function fmtTime(ms) {
+    var d = new Date(ms), n = new Date();
+    if (d.toDateString() === n.toDateString()) return d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+  }
+  function fmtFull(ms) {
+    return new Date(ms).toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  }
+  function curConv() { return data.conversations.filter(function (c) { return c.key === state.cur; })[0]; }
+
+  function visible() {
+    var q = state.q.trim().toLowerCase();
+    return data.conversations.filter(function (c) {
+      if (state.shop !== "all" && c.shop_id !== state.shop) return false;
+      if (state.tab === "unread" && !c.unread) return false;
+      if (state.tab === "pending" && !c.pending) return false;
+      if (q && (c.name + " " + c.last_text).toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    });
+  }
+
+  function renderShops() {
+    var box = $("shops");
+    box.textContent = "";
+    box.appendChild(el("div", "pane-label", "Gian hàng"));
+    var all = el("button", "shop-btn");
+    all.setAttribute("aria-pressed", String(state.shop === "all"));
+    all.appendChild(el("span", "nm", "Tất cả shop"));
+    var total = data.conversations.reduce(function (n, c) { return n + (c.unread || 0); }, 0);
+    all.appendChild(el("span", "cnt" + (total ? " has" : ""), String(total)));
+    all.onclick = function () { state.shop = "all"; renderAll(); };
+    box.appendChild(all);
+    data.shops.forEach(function (s) {
+      var b = el("button", "shop-btn");
+      b.setAttribute("aria-pressed", String(state.shop === s.id));
+      b.appendChild(dot(s.id));
+      b.appendChild(el("span", "nm", s.name));
+      var u = data.conversations.filter(function (c) { return c.shop_id === s.id; }).reduce(function (n, c) { return n + (c.unread || 0); }, 0);
+      if (s.status !== "active") {
+        var w = el("span", "warn", "Kết nối lại");
+        b.appendChild(w);
+        b.title = s.last_error || "Shop cần kết nối lại";
+      } else {
+        b.appendChild(el("span", "cnt" + (u ? " has" : ""), String(u)));
+        if (s.last_error) b.title = "Lần đồng bộ gần nhất lỗi: " + s.last_error;
+      }
+      b.onclick = function () { state.shop = s.id; renderAll(); };
+      box.appendChild(b);
+    });
+  }
+
+  function renderTabs() {
+    var box = $("tabs");
+    box.textContent = "";
+    [["all", "Tất cả"], ["unread", "Chưa đọc"], ["pending", "Chưa trả lời"]].forEach(function (t) {
+      var b = el("button", "tab", t[1]);
+      b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", String(state.tab === t[0]));
+      b.onclick = function () { state.tab = t[0]; renderAll(); };
+      box.appendChild(b);
+    });
+  }
+
+  function renderList() {
+    var box = $("convs");
+    box.textContent = "";
+    if (!data.shops.length) {
+      var e = el("div", "empty");
+      e.appendChild(el("p", null, "Chưa kết nối shop nào."));
+      var a = el("a", "btn", "Kết nối shop Shopee");
+      a.href = "/auth/connect";
+      e.appendChild(a);
+      box.appendChild(e);
+      return;
+    }
+    var items = visible();
+    if (!items.length) { box.appendChild(el("div", "empty", "Không có hội thoại nào khớp bộ lọc.")); return; }
+    items.forEach(function (c) {
+      var b = el("button", "conv" + (c.unread ? " unread" : ""));
+      if (state.cur === c.key) b.setAttribute("aria-current", "true");
+      var r1 = el("div", "r1");
+      r1.appendChild(el("span", "who", c.name));
+      r1.appendChild(el("span", "time", fmtTime(c.last_ts)));
+      var sn = el("div", "shopname");
+      sn.appendChild(dot(c.shop_id));
+      sn.appendChild(el("span", null, shopOf(c.shop_id).name));
+      var r2 = el("div", "r2");
+      r2.appendChild(el("span", "prev", (c.pending ? "" : "Bạn: ") + c.last_text));
+      if (c.unread) r2.appendChild(el("span", "badge", String(c.unread)));
+      b.appendChild(r1); b.appendChild(sn); b.appendChild(r2);
+      b.onclick = function () { openConv(c.key); };
+      box.appendChild(b);
+    });
+  }
+
+  var draft = {}; // giữ nội dung đang soạn khi giao diện vẽ lại
+  function renderChat() {
+    var box = $("chat");
+    var oldTa = $("reply");
+    if (oldTa && state.cur) draft[state.cur] = oldTa.value;
+    box.textContent = "";
+    var c = curConv();
+    if (!c) { box.appendChild(el("div", "none", "Chọn một hội thoại ở bên trái để xem và trả lời.")); return; }
+    var s = shopOf(c.shop_id);
+
+    var head = el("div", "chat-head");
+    var title = el("div", "chat-title");
+    var back = el("button", "back", "‹ Quay lại");
+    back.onclick = function () { app.setAttribute("data-view", "list"); };
+    title.appendChild(back);
+    title.appendChild(el("span", "nm", c.name));
+    var pill = el("span", "shop-pill");
+    pill.appendChild(dot(c.shop_id));
+    pill.appendChild(el("span", null, s.name));
+    title.appendChild(pill);
+    head.appendChild(title);
+
+    var meta = el("div", "meta");
+    var asg = el("label", "assign", "Phụ trách");
+    var sel = el("select");
+    sel.id = "assignee";
+    [""].concat(data.staff).forEach(function (n) {
+      var o = el("option", null, n || "Chưa gán");
+      o.value = n;
+      if (c.assignee === n) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.onchange = function () {
+      c.assignee = sel.value;
+      api("PATCH", "/api/conversations/" + c.key + "/meta", { assignee: sel.value }).catch(function (e) { toast(e.message, true); });
+    };
+    asg.appendChild(sel);
+    meta.appendChild(asg);
+    var tags = el("div", "tags");
+    data.tags.forEach(function (t) {
+      var b = el("button", "tag", t);
+      b.setAttribute("aria-pressed", String(c.tags.indexOf(t) !== -1));
+      b.onclick = function () {
+        var i = c.tags.indexOf(t);
+        if (i === -1) c.tags.push(t); else c.tags.splice(i, 1);
+        api("PATCH", "/api/conversations/" + c.key + "/meta", { tags: c.tags }).catch(function (e) { toast(e.message, true); });
+        renderChat();
+      };
+      tags.appendChild(b);
+    });
+    meta.appendChild(tags);
+    head.appendChild(meta);
+    box.appendChild(head);
+
+    var msgs = el("div", "msgs");
+    msgs.id = "msgs";
+    state.msgs.forEach(function (m) {
+      var d = el("div", "m" + (m.from === "shop" ? " s" : ""));
+      d.appendChild(document.createTextNode(m.text));
+      d.appendChild(el("span", "t", fmtFull(m.ts)));
+      msgs.appendChild(d);
+    });
+    box.appendChild(msgs);
+
+    var comp = el("div", "compose");
+    var as = el("div", "as", "Đang trả lời bằng tài khoản ");
+    as.appendChild(dot(c.shop_id));
+    as.appendChild(el("b", null, s.name));
+    comp.appendChild(as);
+    var row = el("div", "row");
+    var ta = el("textarea");
+    ta.id = "reply";
+    ta.placeholder = "Nhập tin nhắn trả lời khách";
+    ta.setAttribute("aria-label", "Tin nhắn trả lời");
+    ta.value = draft[c.key] || "";
+    var send = el("button", "send", "Gửi");
+    function toggle() { send.disabled = !ta.value.trim() || s.status !== "active"; }
+    toggle();
+    var sending = false;
+    function doSend() {
+      var t = ta.value.trim();
+      if (!t || sending || s.status !== "active") return;
+      sending = true; send.disabled = true; send.textContent = "Đang gửi";
+      api("POST", "/api/conversations/" + c.key + "/reply", { text: t }).then(function () {
+        draft[c.key] = "";
+        return loadAll(true);
+      }).catch(function (e) {
+        toast(e.message, true);
+        sending = false; send.textContent = "Gửi"; toggle();
+      });
+    }
+    ta.oninput = toggle;
+    ta.onkeydown = function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); doSend(); } };
+    send.onclick = doSend;
+    row.appendChild(ta); row.appendChild(send);
+    comp.appendChild(row);
+    if (s.status !== "active") {
+      var w = el("div", "hint warn-text");
+      w.appendChild(document.createTextNode("Shop này cần kết nối lại trước khi gửi tin. "));
+      var a = el("a", null, "Kết nối lại");
+      a.href = "/auth/connect";
+      w.appendChild(a);
+      comp.appendChild(w);
+    } else {
+      comp.appendChild(el("div", "hint", "Enter để gửi, Shift + Enter để xuống dòng. Tin gửi đi dùng đúng tài khoản của shop đang mở."));
+    }
+    box.appendChild(comp);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function renderAll() { renderShops(); renderTabs(); renderList(); renderChat(); }
+
+  function loadMsgs() {
+    if (!state.cur) return Promise.resolve();
+    var key = state.cur;
+    return api("GET", "/api/conversations/" + key + "/messages").then(function (r) {
+      if (state.cur === key) state.msgs = r.messages;
+    }).catch(function () {});
+  }
+
+  function loadAll(keepScroll) {
+    return api("GET", "/api/state").then(function (d) {
+      data = d;
+      return loadMsgs();
+    }).then(function () {
+      var focused = document.activeElement && document.activeElement.id === "reply";
+      var sel = focused ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
+      renderAll();
+      if (focused) { var t = $("reply"); if (t) { t.focus(); t.setSelectionRange(sel[0], sel[1]); } }
+      $("status").textContent = (data.demo ? "Chế độ demo, dữ liệu giả · " : "") + "Cập nhật " + new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    }).catch(function (e) {
+      $("status").textContent = "Mất kết nối server";
+    });
+  }
+
+  function openConv(key) {
+    state.cur = key;
+    state.msgs = [];
+    app.setAttribute("data-view", "chat");
+    var c = curConv();
+    if (c) c.unread = 0;
+    api("POST", "/api/conversations/" + key + "/open").catch(function () {});
+    loadMsgs().then(renderAll);
+    renderAll();
+  }
+
+  $("q").oninput = function (e) { state.q = e.target.value; renderList(); };
+  $("sync").onclick = function () {
+    $("sync").disabled = true;
+    api("POST", "/api/sync").then(function () { return loadAll(); }).then(function () { toast("Đã đồng bộ với Shopee"); })
+      .catch(function (e) { toast(e.message, true); })
+      .then(function () { $("sync").disabled = false; });
+  };
+
+  var params = new URLSearchParams(location.search);
+  if (params.get("connected")) { toast("Đã kết nối shop " + params.get("connected")); history.replaceState(null, "", "/"); }
+  app.setAttribute("data-view", "list");
+  loadAll();
+  try {
+    var es = new EventSource("/api/events");
+    es.onmessage = function () { loadAll(); };
+  } catch (e) {}
+  setInterval(loadAll, 30000);
+})();
+</script>
+
+</body>
+</html>

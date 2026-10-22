@@ -1,0 +1,22 @@
+# Đổi "app" thành tên duy nhất của bạn (fly launch --no-deploy sẽ gợi ý)
+app = "shopee-inbox"
+primary_region = "sin"
+
+[build]
+
+[env]
+  PORT = "8080"
+  NODE_ENV = "production"
+  DATA_FILE = "/data/db.json"
+
+# Dữ liệu lưu trong một file trên ổ đĩa, nên chỉ chạy đúng 1 máy
+[mounts]
+  source = "inbox_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
