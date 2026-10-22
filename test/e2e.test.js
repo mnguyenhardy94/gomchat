@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'shopee-inbox-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'gomchat-'));
 Object.assign(process.env, {
   SHOPEE_PARTNER_ID: '1000001',
   SHOPEE_PARTNER_KEY: 'mock_partner_key',

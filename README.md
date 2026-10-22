@@ -1,4 +1,4 @@
-# Hộp thư đa shop (Shopee Open Platform)
+# Gomchat
 
 Gom tin nhắn của nhiều shop Shopee về một giao diện, trả lời bằng đúng tài khoản của từng shop.
 

@@ -1,5 +1,5 @@
 # Đổi "app" thành tên duy nhất của bạn (fly launch --no-deploy sẽ gợi ý)
-app = "shopee-inbox"
+app = "gomchat"
 primary_region = "sin"
 
 [build]

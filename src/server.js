@@ -69,7 +69,7 @@ app.use((req, res, next) => {
   const ok = u === cfg.adminUser && p.length === cfg.adminPass.length &&
     crypto.timingSafeEqual(Buffer.from(p), Buffer.from(cfg.adminPass));
   if (ok) return next();
-  res.set('WWW-Authenticate', 'Basic realm="Hop thu Shopee"').status(401).send('Cần đăng nhập');
+  res.set('WWW-Authenticate', 'Basic realm="Gomchat"').status(401).send('Cần đăng nhập');
 });
 
 app.use(express.json({ limit: '100kb' }));
@@ -178,7 +178,7 @@ app.get('/api/events', (req, res) => {
 // ---------- Chạy ----------
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   const server = app.listen(cfg.port, () => {
-    console.log(`Hộp thư Shopee chạy tại ${cfg.publicUrl} (cổng ${cfg.port})`);
+    console.log(`Gomchat chạy tại ${cfg.publicUrl} (cổng ${cfg.port})`);
     console.log(`URL push cần đăng ký trên Shopee: ${pushUrl}`);
     console.log(`URL redirect cần đăng ký: ${cfg.publicUrl}/auth/callback`);
     if (!cfg.adminPass) console.warn('[cảnh báo] ADMIN_PASS trống: giao diện đang mở, chỉ dùng khi chạy thử trên máy bạn.');
